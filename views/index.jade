@@ -1,0 +1,21 @@
+extends layout
+
+block content
+	h1= title
+	p Welcome to #{title}
+	p
+		a(href="/led/on") on
+	p
+		a(href="/led/off") off
+	p
+		a(href="/led/cooler") cooler
+	p
+		a(href="/led/warmer") warmer
+	p
+		a(href="/led/brighter") brighter
+	p
+		a(href="/led/darker") darker
+	p
+		a(href="/led/night") nightMode
+	p
+		a(href="/led/blink") blink
