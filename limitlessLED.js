@@ -1,6 +1,9 @@
+"use strict";
 var sleep = require("sleep-async")();
 var dgram = require("dgram");
 
+
+//-----------------------------------------------------------------------------
 
 module.exports = function(host,port)
 {
@@ -20,7 +23,7 @@ module.exports = function(host,port)
 		msg = new Buffer(msg);
 		console.log(msg);
 		sleep.sleep(offset_time,function(){
-			self.client.send(msg,0,msg.length,self.port,self.host,function(err){console.log(err);});
+			self.client.send(msg,0,msg.length,self.port,self.host,function(err){if(err)console.log("error : "+err);});
 		})
 	}
 
@@ -35,76 +38,82 @@ module.exports = function(host,port)
 		return a;
 	}
 	this.instruction_set = {
-		all_off : this.setInstruction(39),
-		all_on : this.setInstruction(35),
+		all_off : this.setInstruction("39"),
+		all_on : this.setInstruction("35"),
 		brightness_up : this.setInstruction("3C"),
 		brightness_down : this.setInstruction("34"),
 		warmer : this.setInstruction("3e"),
 		cooler : this.setInstruction("3f"),
-		night_mode_all : this.setInstruction(39),
+		night_mode_all : this.setInstruction("B9"),
 		nignt_mode_all_press_hold : this.setInstruction("BB"),
-		all_brightness_full : this.setInstruction(35),
+		all_brightness_full : this.setInstruction("35"),
 		all_brightness_full_press_hold : this.setInstruction("B5")
 	};	
-	this.on = function(time)
-	{
-		this.sendMessage(this.instruction_set.all_on,time);
+	this.action_set={
+		self:this,
+		full:function(){
+			self.sendMessage(self.instruction_set.all_on,100);
+			self.sendMessage(self.instruction_set.all_brightness_full_press_hold,200);
+		},
+		night:function(){
+			self.sendMessage(self.instruction_set.all_on,100);
+			self.sendMessage(self.instruction_set.night_mode_all,200);
+		},
+		blink:function()
+		{
+			var interval = 500;
+			self.sendMessage(self.instruction_set.all_on,100);
+			self.sendMessage(self.instruction_set.all_off,100+interval);
+			self.sendMessage(self.instruction_set.all_on,100+interval*2);
+			self.sendMessage(self.instruction_set.all_off,100+interval*3);
+			self.sendMessage(self.instruction_set.all_on,100+interval*4);
+			self.sendMessage(self.instruction_set.all_off,100+interval*5);
+			self.sendMessage(self.instruction_set.all_on,100+interval*6);
+		},
+		bulb:function()
+		{
+			for(var i=0;i<22;i+=1)
+				self.sendMessage(self.instruction_set.warmer,100*i);
+		},
+		white:function()
+		{
+			for(var i=0;i<22;i+=1)
+				self.sendMessage(self.instruction_set.cooler,100*i);
+		},
+		brightest:function()
+		{
+			for(var i=0;i<22;i+=1)
+				self.sendMessage(self.instruction_set.brightness_up,100*i);
+		},
+		darkest:function()
+		{
+			for(var i=0;i<22;i+=1)
+				self.sendMessage(self.instruction_set.brightness_down,100*i);
+		},
 	};
-
-	this.off = function(time)
+	this.action = function(action,time)
 	{
-		this.sendMessage(this.instruction_set.all_off,time);
+		var self=this;
+		var action = action;
+		var time = time;
+		if(typeof time == typeof "")
+			time = +time;
+		sleep.sleep(time,function(){
+			for(var key in self.instruction_set)
+			{
+				if(action == key)
+					self.sendMessage(self.instruction_set[key]);
+			}
+			for(var key in self.action_set)
+			{
+				if(action == key)
+					self.action_set[key]();
+			}
+		});
 	}
-
-	this.brighter = function()
-	{
-		this.sendMessage(this.instruction_set.brightness_up);
-	}
-	this.darker = function()
-	{
-		this.sendMessage(this.instruction_set.brightness_down);
-	}
-	this.warmer = function()
-	{
-		this.sendMessage(this.instruction_set.warmer);
-	}
-	this.cooler = function()
-	{
-		this.sendMessage(this.instruction_set.cooler);
-	}
-	this.full = function()
-	{
-		this.sendMessage(this.instruction_set.all_on,0);
-		this.sendMessage(this.instruction_set.all_brightness_full_press_hold);
-	}
-	this.nightMode = function()
-	{
-		this.sendMessage(this.instruction_set.night_mode_all_press_hold);
-		this.sendMessage(this.instruction_set.all_on,0);
-		this.sendMessage(this.setInstruction("B9"),100);
-	}
-	this.blink = function()
-	{
-		this.sendMessage(this.instruction_set.all_off,0);
-		this.sendMessage(this.instruction_set.all_on,500);
-		this.sendMessage(this.instruction_set.all_off,1000);
-		this.sendMessage(this.instruction_set.all_on,1500);
-	}
-
-	console.log(this);
-
-//起動しましたよ証明
-//-------------------------------------------------------------------------------
-
-//	console.log(this.instruction_set);
-//	
-
-//	this.sendMessage(self.instruction_set["all_off"]);
-	//console.log(this);
-
-
 
 }
+
 //-----------------------------------------------------------------------------
 
 
