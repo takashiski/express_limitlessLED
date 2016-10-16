@@ -2,7 +2,7 @@
 expressとlimitlessLEDであれこれするやつ
 
 * for dual white(warm/cool)
-* order by internet browser 
+* order by internet browser via your home server(ex. intel edison, raspberry pi)
 * you can set timed and interval
 
 
