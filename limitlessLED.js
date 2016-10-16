@@ -22,6 +22,7 @@ module.exports = function(host,port)
 		var msg = this.convertHexToDec(message);
 		msg = new Buffer(msg);
 		console.log(msg);
+		console.log(time);
 		sleep.sleep(offset_time,function(){
 			self.client.send(msg,0,msg.length,self.port,self.host,function(err){if(err)console.log("error : "+err);});
 		})
@@ -50,8 +51,10 @@ module.exports = function(host,port)
 		all_brightness_full_press_hold : this.setInstruction("B5")
 	};	
 	this.action_set={
-		self:this,
-		full:function(){
+//		self:this,
+		on:function(){},
+		off:function(){},
+		full_brightness:function(){
 			self.sendMessage(self.instruction_set.all_on,100);
 			self.sendMessage(self.instruction_set.all_brightness_full_press_hold,200);
 		},
@@ -59,9 +62,9 @@ module.exports = function(host,port)
 			self.sendMessage(self.instruction_set.all_on,100);
 			self.sendMessage(self.instruction_set.night_mode_all,200);
 		},
-		blink:function()
+		blink:function(interval)
 		{
-			var interval = 500;
+			var interval = interval || 500;
 			self.sendMessage(self.instruction_set.all_on,100);
 			self.sendMessage(self.instruction_set.all_off,100+interval);
 			self.sendMessage(self.instruction_set.all_on,100+interval*2);
@@ -70,28 +73,38 @@ module.exports = function(host,port)
 			self.sendMessage(self.instruction_set.all_off,100+interval*5);
 			self.sendMessage(self.instruction_set.all_on,100+interval*6);
 		},
-		bulb:function()
+		bulb:function(interval)
 		{
+			var interval = interval || 100;
 			for(var i=0;i<22;i+=1)
-				self.sendMessage(self.instruction_set.warmer,100*i);
+				self.sendMessage(self.instruction_set.warmer,interval*i);
 		},
 		white:function()
 		{
+			var interval = interval || 100;
 			for(var i=0;i<22;i+=1)
-				self.sendMessage(self.instruction_set.cooler,100*i);
+				self.sendMessage(self.instruction_set.cooler,interval*i);
 		},
-		brightest:function()
+		brightest:function(interval)
 		{
 			for(var i=0;i<22;i+=1)
-				self.sendMessage(self.instruction_set.brightness_up,100*i);
+				self.sendMessage(self.instruction_set.brightness_up,interval*i);
 		},
-		darkest:function()
+		darkest:function(interval)
 		{
 			for(var i=0;i<22;i+=1)
-				self.sendMessage(self.instruction_set.brightness_down,100*i);
+				self.sendMessage(self.instruction_set.brightness_down,interval*i);
 		},
 	};
-	this.action = function(action,time)
+	this.key_set = (function(){
+		var array=[];
+		for(var key in self.action_set)
+			array.push(key);
+//		for(var key in self.instruction_set)
+//			array.push(key);
+		return array;
+	})();
+	this.action = function(action,time,interval)
 	{
 		var self=this;
 		var action = action;
@@ -107,7 +120,7 @@ module.exports = function(host,port)
 			for(var key in self.action_set)
 			{
 				if(action == key)
-					self.action_set[key]();
+					self.action_set[key](interval);
 			}
 		});
 	}
